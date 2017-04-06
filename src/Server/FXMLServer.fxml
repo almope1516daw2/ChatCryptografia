@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="397.0" prefWidth="423.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Server.FXMLServerController">
+   <children>
+      <ImageView fitHeight="150.0" fitWidth="200.0" layoutX="137.0" layoutY="23.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../Resource/icon.jpg" />
+         </image>
+      </ImageView>
+      <Label layoutX="110.0" layoutY="222.0" text="Usuari" />
+      <Label layoutX="111.0" layoutY="256.0" text="Contrasenya" />
+      <TextField fx:id="tfUser" layoutX="184.0" layoutY="218.0" prefHeight="25.0" prefWidth="122.0" />
+      <PasswordField fx:id="tfPass" layoutX="184.0" layoutY="252.0" prefHeight="25.0" prefWidth="122.0" />
+      <Button layoutX="167.0" layoutY="308.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="89.0" text="Entrar" />
+   </children>
+</AnchorPane>
