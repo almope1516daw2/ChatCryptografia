@@ -10,28 +10,41 @@ import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
 
 public class FXMLClientController implements Initializable
 {
+    @FXML
+  private TextField tfAddress;
+    @FXML
+  private TextField tfPort;
   @FXML
   private TextField tfMsg;
   @FXML
-  private  TextArea taLog;
+  private TextArea taLog;
+  @FXML
+  private Button btnConnect;
+  @FXML
+  private Button btnDisconnect;
+  @FXML
+  private Button btnSend;
   
   
   
-   String username, address = "localhost";
+   String username, address;
      ArrayList<String> users = new ArrayList();
-     int port = 2222;
+     int port;
      Boolean isConnected = false;
     
      Socket sock;
      BufferedReader reader;
      PrintWriter writer;
     
+     
+     //Crea un thread que maneja los eventos que envia servidor
      public void ListenThread() 
     {
          Thread IncomingReader = new Thread(new IncomingReader());
@@ -91,6 +104,11 @@ public class FXMLClientController implements Initializable
          }
     }
     
+     /**
+      * Maneja lo que le llega del servidor. 
+      * Ejemplo: Manolito se ha conectado. 
+      *          Eso le llega del servidor y lo muestra en pantalla
+      */
     public  class IncomingReader implements Runnable
     {
         @Override
@@ -108,8 +126,7 @@ public class FXMLClientController implements Initializable
                      if (data[2].equals(chat)) 
                      {
                         taLog.setText(taLog.getText() + data[0] + ": " + data[1] + "\n");
-                        //System.out.println(data[0] + ": " + data[1] + "\n");
-                        //ta_chat.setCaretPosition(ta_chat.getDocument().getLength());
+                        
                      } 
                      else if (data[2].equals(connect))
                      {
@@ -119,6 +136,7 @@ public class FXMLClientController implements Initializable
                      else if (data[2].equals(disconnect)) 
                      {
                          userRemove(data[0]);
+                         
                      } 
                      else if (data[2].equals(done)) 
                      {
@@ -158,11 +176,16 @@ public class FXMLClientController implements Initializable
   @FXML
   private void Connect(ActionEvent event)
   {
+      btnDisconnect.setDisable(false);
+      btnSend.setDisable(false);
+      btnConnect.setDisable(true);
+      
+      address = tfAddress.getText();
+      port = Integer.parseInt(tfPort.getText());
+      System.out.println(address);
+      System.out.println(port);
     if (isConnected == false) 
         {
-            //username = "Albert";
-            //username = tf_username.getText();
-            //tf_username.setEditable(false);
 
             try 
             {
@@ -191,14 +214,22 @@ public class FXMLClientController implements Initializable
   @FXML
   private void Disconnect(ActionEvent event)
   {
-    sendDisconnect();
+      btnDisconnect.setDisable(true);
+      btnSend.setDisable(true);
+      btnConnect.setDisable(false);
+        taLog.setText("");
+        sendDisconnect();
         DisconnectUser();
   }
-  public void getUser(String user){
+  public void setUser(String user){
       username = user;
+      System.out.println("HELLO " + username);
   }
   
   
   
-  public void initialize(URL url, ResourceBundle rb) {}
+  public void initialize(URL url, ResourceBundle rb) {
+    btnDisconnect.setDisable(true);
+    btnSend.setDisable(true);
+  }
 }

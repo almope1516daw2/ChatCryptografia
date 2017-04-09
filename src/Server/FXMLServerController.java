@@ -12,6 +12,7 @@ import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
@@ -20,6 +21,14 @@ public class FXMLServerController implements Initializable
 {
   @FXML
   public TextArea taLog;
+  @FXML
+  public Button btnStart;
+  @FXML
+  public Button btnStop;
+  @FXML
+  public Button btnUsers;
+  @FXML
+  public Button btnClear;
   
   
      ArrayList clientOutputStreams;
@@ -186,6 +195,9 @@ public class FXMLServerController implements Initializable
   @FXML
   private void Start(ActionEvent event)
   {
+      btnStop.setDisable(false);
+      btnUsers.setDisable(false);
+      btnStart.setDisable(true);
    Thread starter = new Thread(new ServerStart());
         starter.start();
         
@@ -195,6 +207,9 @@ public class FXMLServerController implements Initializable
   @FXML
   private void Stop(ActionEvent event)
   {
+      btnStop.setDisable(true);
+      btnUsers.setDisable(true);
+      btnStart.setDisable(false);
     try 
         {
             Thread.sleep(2000);                 //5000 milliseconds is five second.
@@ -226,5 +241,8 @@ public class FXMLServerController implements Initializable
    taLog.setText(""); 
   }
   
-  public void initialize(URL url, ResourceBundle rb) {}
+  public void initialize(URL url, ResourceBundle rb) {
+      btnStop.setDisable(true);
+      btnUsers.setDisable(true);
+  }
 }

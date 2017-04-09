@@ -14,10 +14,12 @@
             <Image url="@../Resource/icon.png" />
          </image>
       </ImageView>
-      <Label layoutX="110.0" layoutY="222.0" text="Usuari" />
-      <Label layoutX="111.0" layoutY="256.0" text="Contrasenya" />
-      <TextField fx:id="tfUser" layoutX="184.0" layoutY="218.0" prefHeight="25.0" prefWidth="122.0" />
-      <PasswordField fx:id="tfPass" layoutX="184.0" layoutY="252.0" prefHeight="25.0" prefWidth="122.0" />
+      <Label layoutX="111.0" layoutY="199.0" text="Usuari" />
+      <Label layoutX="112.0" layoutY="235.0" text="Contrasenya" />
+      <TextField fx:id="tfUser" layoutX="184.0" layoutY="195.0" prefHeight="25.0" prefWidth="122.0" />
+      <PasswordField fx:id="tfPass" layoutX="184.0" layoutY="231.0" prefHeight="25.0" prefWidth="122.0" />
       <Button layoutX="167.0" layoutY="308.0" mnemonicParsing="false" onAction="#loginButtonAction" prefHeight="40.0" prefWidth="89.0" text="Entrar" />
+      <Label layoutX="111.0" layoutY="273.0" text="Alias" />
+      <TextField fx:id="tfAlias" layoutX="184.0" layoutY="269.0" prefHeight="25.0" prefWidth="122.0" promptText="Nom a mostrar" />
    </children>
 </AnchorPane>
