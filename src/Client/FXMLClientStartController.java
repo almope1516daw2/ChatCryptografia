@@ -54,6 +54,7 @@ public class FXMLClientStartController
       Stage stage = new Stage();
       stage.setScene(new Scene(p));
       stage.show();
+      ((Node)(event.getSource())).getScene().getWindow().hide();
       /*Parent home_page_parent = FXMLLoader.load(getClass().getResource("FXMLClient.fxml"));
                             Scene home_page_scene = new Scene(home_page_parent);
                             Stage app_stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
