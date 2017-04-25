@@ -6,34 +6,23 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-
-
-
-
-
-
-
-
 public class ServerApplication
-  extends Application
-{
-  public ServerApplication() {}
-  
-  public void start(Stage stage)
-    throws Exception
-  {
-    Parent root = (Parent)FXMLLoader.load(getClass().getResource("FXMLServer.fxml"));
-    
-    Scene scene = new Scene(root);
-    
-    stage.setScene(scene);
-    stage.show();
-  }
-  
+        extends Application {
 
+    public ServerApplication() {
+    }
 
-  public static void main(String[] args)
-  {
-    launch(args);
-  }
+    public void start(Stage stage)
+            throws Exception {
+        Parent root = (Parent) FXMLLoader.load(getClass().getResource("FXMLServer.fxml"));
+
+        Scene scene = new Scene(root);
+
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

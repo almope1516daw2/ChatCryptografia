@@ -8,16 +8,13 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+public class ClientApplication extends Application {
 
+    public ClientApplication() {
+    }
 
-
-
-
-public class ClientApplication extends Application{
-    public ClientApplication() {}
-  
-    public void start(Stage stage)throws Exception{
-        Parent root = (Parent)FXMLLoader.load(getClass().getResource("FXMLClient.fxml"));
+    public void start(Stage stage) throws Exception {
+        Parent root = (Parent) FXMLLoader.load(getClass().getResource("FXMLClient.fxml"));
 
         Scene scene = new Scene(root);
 
@@ -25,12 +22,9 @@ public class ClientApplication extends Application{
         //stage.show();
         stage.close();
     }
-  
 
-
-  public static void main(String[] args)
-  {
-    launch(args);
-  }
+    public static void main(String[] args) {
+        launch(args);
+    }
 
 }
