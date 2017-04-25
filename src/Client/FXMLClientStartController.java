@@ -37,8 +37,7 @@ public class FXMLClientStartController
      * @throws IOException
      */
     @FXML
-    private void loginButtonAction(ActionEvent event)
-            throws IOException {
+    private void loginButtonAction(ActionEvent event)throws IOException {
 
         String user = tfAlias.getText();
         String psw = tfPass.getText();
@@ -58,13 +57,16 @@ public class FXMLClientStartController
         //Aqui se envia el alias al cliente
         FXMLClientController cli = Loader.getController();
         cli.setUser(user);
-        cli.getPsw(pswEncrypted);
+        cli.setPsw(pswEncrypted);
+        String pswChat = cli.getPswChat();
 
-        Parent p = Loader.getRoot();
-        Stage stage = new Stage();
-        stage.setScene(new Scene(p));
-        stage.show();
-        ((Node) (event.getSource())).getScene().getWindow().hide();
+        if(pswEncrypted.equals(pswChat)){
+            Parent p = Loader.getRoot();
+            Stage stage = new Stage();
+            stage.setScene(new Scene(p));
+            stage.show();
+            ((Node) (event.getSource())).getScene().getWindow().hide();
+        }
         /*Parent home_page_parent = FXMLLoader.load(getClass().getResource("FXMLClient.fxml"));
          Scene home_page_scene = new Scene(home_page_parent);
          Stage app_stage = (Stage) ((Node) event.getSource()).getScene().getWindow();

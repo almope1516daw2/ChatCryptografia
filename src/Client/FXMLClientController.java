@@ -3,6 +3,7 @@ package Client;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
@@ -192,14 +193,28 @@ public class FXMLClientController implements Initializable {
         username = user;
         System.out.println("HELLO " + username);
     }
+    
+    public void setPsw(String psw){
+        this.psw = psw;
+    }
+    
+    public String getPsw(){
+        return psw;
+    }
+    
+    public String getPswChat() throws UnsupportedEncodingException{
+        String pToMatch = "fjeclot";
+        String pswResult;
+        pswResult = FXMLClientStartController.encryptPsw(pToMatch);
+        
+        return pswResult;
+    }
 
     public void initialize(URL url, ResourceBundle rb) {
         btnDisconnect.setDisable(true);
         btnSend.setDisable(true);
     }
     
-    public void getPsw(String psw){
-        this.psw = psw;
-    }
+
     
 }
