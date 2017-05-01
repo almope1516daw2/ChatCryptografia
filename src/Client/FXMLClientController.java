@@ -6,7 +6,14 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -14,6 +21,11 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import sun.misc.BASE64Encoder;
 
 public class FXMLClientController implements Initializable {
 
@@ -40,7 +52,9 @@ public class FXMLClientController implements Initializable {
     Socket sock;
     BufferedReader reader;
     PrintWriter writer;
-
+    KeyPair parellaClaus;
+    PublicKey pubKey;
+    PrivateKey privKey;
     //Crea un thread que maneja los eventos que envia servidor
     public void ListenThread() {
         Thread IncomingReader = new Thread(new IncomingReader());
@@ -97,7 +111,7 @@ public class FXMLClientController implements Initializable {
         @Override
         public void run() {
             String[] data;
-            String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat";
+            String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat", publicKey = "Public";
 
             try {
                 while ((stream = reader.readLine()) != null) {
@@ -111,6 +125,9 @@ public class FXMLClientController implements Initializable {
                         userAdd(data[0]);
                     } else if (data[2].equals(disconnect)) {
                         userRemove(data[0]);
+
+                    } else if (data[2].equals(publicKey)) {
+                        System.out.println("PUBLIC ON CLIENT");
 
                     } else if (data[2].equals(done)) {
                         //users.setText("");
@@ -127,14 +144,32 @@ public class FXMLClientController implements Initializable {
     }
 
     @FXML
-    private void Send(ActionEvent event) {
+    private void Send(ActionEvent event) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         String nothing = "";
         if ((tfMsg.getText()).equals(nothing)) {
             tfMsg.setText("");
             tfMsg.requestFocus();
         } else {
+            ////////////// Encriptació
+            
+            String msg = tfMsg.getText();
+            byte[] missatge = msg.getBytes();
+            
+			
+            Cipher xifrarRSA = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            System.out.println("\n" + xifrarRSA.getProvider().getInfo());
+            
+            
+            // Inicialització del xifrador: xifrem amb la clau pública
+            xifrarRSA.init(Cipher.ENCRYPT_MODE, parellaClaus.getPublic());
+            
+            // Xifrat del missatge
+            byte[] missatgeXifrat = xifrarRSA.doFinal(missatge);
+            System.out.println(new String(missatgeXifrat));
+            
+            
             try {
-                writer.println(username + ":" + tfMsg.getText() + ":" + "Chat");
+                writer.println(username + ":" + missatgeXifrat + ":" + "Chat");
                 writer.flush(); // flushes the buffer
             } catch (Exception ex) {
                 taLog.setText(taLog.getText() + "Message was not sent. \n");
@@ -148,15 +183,30 @@ public class FXMLClientController implements Initializable {
     }
 
     @FXML
-    private void Connect(ActionEvent event) {
+    private void Connect(ActionEvent event) throws NoSuchAlgorithmException {
         btnDisconnect.setDisable(false);
         btnSend.setDisable(false);
         btnConnect.setDisable(true);
 
+        
+        
         address = tfAddress.getText();
         port = Integer.parseInt(tfPort.getText());
         System.out.println(address);
         System.out.println(port);
+        
+        
+        
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(1024);
+        parellaClaus = keyGen.generateKeyPair();
+        pubKey = parellaClaus.getPublic();
+        privKey = parellaClaus.getPrivate();
+            
+        
+        
+        String pubKeyToSend = Base64.getEncoder().encodeToString(pubKey.getEncoded());
+        System.out.println(pubKeyToSend);
         if (isConnected == false) {
 
             try {
@@ -165,6 +215,8 @@ public class FXMLClientController implements Initializable {
                 reader = new BufferedReader(streamreader);
                 writer = new PrintWriter(sock.getOutputStream());
                 writer.println(username + ":has connected.:Connect");
+                writer.println(pubKeyToSend + ":sent public key:Public");
+                //writer.println(pubKey);
                 writer.flush();
                 isConnected = true;
             } catch (Exception ex) {
