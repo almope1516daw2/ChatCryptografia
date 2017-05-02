@@ -1,6 +1,7 @@
 package Client;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -14,6 +15,12 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Base64;
+import static org.apache.commons.codec.binary.Hex.decodeHex;
 
 public class FXMLClientController implements Initializable {
 
@@ -32,6 +39,7 @@ public class FXMLClientController implements Initializable {
     @FXML
     private Button btnSend;
 
+    
     String username, address,psw;
     ArrayList<String> users = new ArrayList();
     int port;
@@ -41,6 +49,8 @@ public class FXMLClientController implements Initializable {
     BufferedReader reader;
     PrintWriter writer;
 
+    public String StringSecretKey;
+    SecretKey secretKey;
     //Crea un thread que maneja los eventos que envia servidor
     public void ListenThread() {
         Thread IncomingReader = new Thread(new IncomingReader());
@@ -97,14 +107,22 @@ public class FXMLClientController implements Initializable {
         @Override
         public void run() {
             String[] data;
-            String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat";
+            String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat", key = "Key";
 
             try {
                 while ((stream = reader.readLine()) != null) {
                     data = stream.split(":");
+                    System.out.println("################" + data[0] + ":::"+ data[1] + ":::"+ data[2]);
 
                     if (data[2].equals(chat)) {
-                        taLog.setText(taLog.getText() + data[0] + ": " + data[1] + "\n");
+                        if(data[1].equals("has connected.")){
+                            taLog.setText(taLog.getText() + data[0] + ": " + data[1] + "\n");
+                        } else {
+                            String message = decryptData(String.valueOf(secretKey.getEncoded()), data[1]);
+                        System.out.println(message);
+                        taLog.setText(taLog.getText() + data[0] + ": " + String.valueOf(message) + "\n");
+                        }
+                        
 
                     } else if (data[2].equals(connect)) {
                         //taLog.removeAll();
@@ -116,6 +134,11 @@ public class FXMLClientController implements Initializable {
                         //users.setText("");
                         writeUsers();
                         users.clear();
+                    } 
+                    if (data[2].equals(key)) {
+                        
+                        StringSecretKey = data[0];
+                        secretKey = loadKey(StringSecretKey);
                     }
                 }
             } catch (Exception ex) {
@@ -123,6 +146,90 @@ public class FXMLClientController implements Initializable {
         }
     }
 
+    public static SecretKey loadKey(String key) throws IOException
+    {
+        String data = key;
+        byte[] encoded;
+        try {
+            encoded = decodeHex(data.toCharArray());
+        } catch (DecoderException e) {
+            System.out.println("ERROR SECRET KEY");
+            e.printStackTrace();
+            return null;
+        }
+        return new SecretKeySpec(encoded, "AES");
+    }
+    /*
+    public byte[] encryptData(SecretKey sKey, String stringData) {
+        byte[] data = stringData.getBytes();
+        byte[] encryptedData = null;
+        try {
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, sKey);
+            
+            encryptedData = cipher.doFinal(data);
+        } catch (Exception ex) {
+            System.err.println("Error xifrant les dades: " + ex.getMessage());
+        }
+    return encryptedData;
+    }
+    */
+    
+    public String encryptData(String sKey, String stringData) {
+       byte[] raw;
+            String encryptedString;
+            SecretKeySpec skeySpec;
+            byte[] encryptText = stringData.getBytes();
+            Cipher cipher;
+            try {
+                raw = Base64.decodeBase64(sKey);
+                skeySpec = new SecretKeySpec(raw, "AES");
+                cipher = Cipher.getInstance("AES");
+                cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+                encryptedString = Base64.encodeBase64String(cipher.doFinal(encryptText));
+            } 
+            catch (Exception e) {
+                e.printStackTrace();
+                return "Error";
+            }
+            return encryptedString;
+    }
+    
+    
+    /*public byte[] decryptData(SecretKey sKey, String stringData) {
+        byte[] data = stringData.getBytes();
+        byte[] encryptedData = null;
+        try {
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, sKey);
+            
+            encryptedData = cipher.doFinal(data);
+        } catch (Exception ex) {
+            System.err.println("Error xifrant les dades: " + ex);
+        }
+    return encryptedData;
+    }*/
+    
+    public String decryptData(String sKey, String stringData) {
+        Cipher cipher;
+            String encryptedString;
+            byte[] encryptText = null;
+            byte[] raw;
+            SecretKeySpec skeySpec;
+            try {
+                raw = Base64.decodeBase64(sKey);
+                skeySpec = new SecretKeySpec(raw, "AES");
+                encryptText = Base64.decodeBase64(stringData);
+                cipher = Cipher.getInstance("AES");
+                cipher.init(Cipher.DECRYPT_MODE, skeySpec);
+                encryptedString = new String(cipher.doFinal(encryptText));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "Error";
+            }
+            return encryptedString;
+    }
+    
     public FXMLClientController() {
     }
 
@@ -134,7 +241,11 @@ public class FXMLClientController implements Initializable {
             tfMsg.requestFocus();
         } else {
             try {
-                writer.println(username + ":" + tfMsg.getText() + ":" + "Chat");
+                
+                String message = encryptData(String.valueOf(secretKey.getEncoded()), tfMsg.getText());
+                //byte[] message = encryptData(secretKey, tfMsg.getText());
+                System.out.println(message);
+                writer.println(username + ":" + String.valueOf(message) + ":" + "Chat");
                 writer.flush(); // flushes the buffer
             } catch (Exception ex) {
                 taLog.setText(taLog.getText() + "Message was not sent. \n");

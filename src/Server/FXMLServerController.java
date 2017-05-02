@@ -1,11 +1,15 @@
 package Server;
-
+import static org.apache.commons.codec.binary.Hex.*;
+import static org.apache.commons.io.FileUtils.*;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ResourceBundle;
@@ -15,6 +19,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 public class FXMLServerController implements Initializable {
 
@@ -31,7 +37,7 @@ public class FXMLServerController implements Initializable {
 
     ArrayList clientOutputStreams;
     ArrayList<String> users;
-
+    public  String StringSecretKey;
     public class ClientHandler implements Runnable {
 
         BufferedReader reader;
@@ -52,7 +58,7 @@ public class FXMLServerController implements Initializable {
 
         @Override
         public void run() {
-            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat";
+            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat", key = "Key";
             String[] data;
 
             try {
@@ -66,12 +72,15 @@ public class FXMLServerController implements Initializable {
 
                     if (data[2].equals(connect)) {
                         tellEveryone((data[0] + ":" + data[1] + ":" + chat));
+                        tellEveryone((StringSecretKey + ":" + data[0] + ":" + key));
                         userAdd(data[0]);
                     } else if (data[2].equals(disconnect)) {
                         tellEveryone((data[0] + ":has disconnected." + ":" + chat));
                         userRemove(data[0]);
                     } else if (data[2].equals(chat)) {
+                        
                         tellEveryone(message);
+                        
                     } else {
                         System.out.println("No Conditions were met. \n");
                     }
@@ -111,17 +120,20 @@ public class FXMLServerController implements Initializable {
 
     public void userAdd(String data) {
         String message, add = ": :Connect", done = "Server: :Done", name = data;
-        System.out.println("Before " + name + " added. \n");
-        users.add(name);
-        System.out.println("After " + name + " added. \n");
-        String[] tempList = new String[(users.size())];
-        users.toArray(tempList);
+        
+        if(users.size() <= 2){
+            users.add(name);
+            String[] tempList = new String[(users.size())];
+            users.toArray(tempList);
 
-        for (String token : tempList) {
-            message = (token + add);
-            tellEveryone(message);
+            for (String token : tempList) {
+                message = (token + add);
+                tellEveryone(message);
+            }
+            tellEveryone(done);
+        } else {
+        tellEveryone("Cannot connect user");
         }
-        tellEveryone(done);
     }
 
     public void userRemove(String data) {
@@ -146,7 +158,7 @@ public class FXMLServerController implements Initializable {
                 writer.println(message);
                 taLog.setText(taLog.getText() + message + "\n");
                 writer.flush();
-                System.out.println(message + "\n");
+                System.out.println("SERVER: " + message + "\n");
                 //taLog.setCaretPosition(taLog.getDocument().getLength());
 
             } catch (Exception ex) {
@@ -160,15 +172,32 @@ public class FXMLServerController implements Initializable {
     }
 
     @FXML
-    private void Start(ActionEvent event) {
+    private void Start(ActionEvent event) throws NoSuchAlgorithmException, IOException {
         btnStop.setDisable(false);
         btnUsers.setDisable(false);
         btnStart.setDisable(true);
         Thread starter = new Thread(new ServerStart());
         starter.start();
 
+        SecretKey secretKey = generateKey();
+        StringSecretKey = saveKey(secretKey);
+        
         taLog.setText(taLog.getText() + "Server started...\n");
     }
+
+    public static SecretKey generateKey() throws NoSuchAlgorithmException
+    {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(256); // 128 default; 192 and 256 also possible
+        return keyGenerator.generateKey();
+    }
+
+    public static String saveKey(SecretKey key) throws IOException
+    {
+        char[] hex = encodeHex(key.getEncoded());
+        return String.valueOf(hex);
+    }
+
 
     @FXML
     private void Stop(ActionEvent event) {
