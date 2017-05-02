@@ -6,13 +6,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
@@ -21,11 +15,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import sun.misc.BASE64Decoder;
-import javax.xml.bind.DatatypeConverter;
-import java.util.Base64;
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 
 public class FXMLServerController implements Initializable {
 
@@ -43,16 +32,6 @@ public class FXMLServerController implements Initializable {
     ArrayList clientOutputStreams;
     ArrayList<String> users;
 
-    PublicKey pubKey;
-    PrivateKey privKey;
-    
-    
-    KeyPairGenerator keyGen;
-    KeyPair parellaKeys;
-            
-    Cipher xifrarRSA;
-            byte[] decoded;
-            
     public class ClientHandler implements Runnable {
 
         BufferedReader reader;
@@ -73,44 +52,26 @@ public class FXMLServerController implements Initializable {
 
         @Override
         public void run() {
-            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat", publicKey = "Public", servPubKey = getPublicServer();
+            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat";
             String[] data;
 
             try {
                 while ((message = reader.readLine()) != null) {
                     System.out.println("Received: " + message + "\n");
                     data = message.split(":");
-                    
-                    
-                    System.out.println("TOKENS");
-                    
+
                     for (String token : data) {
                         System.out.println(token + "\n");
                     }
 
                     if (data[2].equals(connect)) {
-                        tellEveryone((data[0] + ":" + data[1] + ":" + chat/* + ":" + servPubKey*/));
+                        tellEveryone((data[0] + ":" + data[1] + ":" + chat));
                         userAdd(data[0]);
                     } else if (data[2].equals(disconnect)) {
                         tellEveryone((data[0] + ":has disconnected." + ":" + chat));
                         userRemove(data[0]);
                     } else if (data[2].equals(chat)) {
-                        /*xifrarRSA.init(Cipher.DECRYPT_MODE, parellaKeys.getPrivate());
-                         
-                        byte[] missatgeDes= xifrarRSA.doFinal(decoded);
-                        System.out.println(new String(missatgeDes));
-                        //tellEveryone(message);*/
-                    } else if (data[2].equals(publicKey)) {
-                        /*System.out.println("PUBLIC RECIEVED: ");
-                        //System.out.println(data[0]);
-                        decoded = Base64.getDecoder().decode(data[0]);*/
-                        
-                       
-            
-                        //System.out.println(new String(decoded));
-                    
-                    
-                    
+                        tellEveryone(message);
                     } else {
                         System.out.println("No Conditions were met. \n");
                     }
@@ -199,21 +160,13 @@ public class FXMLServerController implements Initializable {
     }
 
     @FXML
-    private void Start(ActionEvent event) throws NoSuchAlgorithmException, NoSuchPaddingException {
+    private void Start(ActionEvent event) {
         btnStop.setDisable(false);
         btnUsers.setDisable(false);
         btnStart.setDisable(true);
         Thread starter = new Thread(new ServerStart());
         starter.start();
-        
-        
-        keyGen = KeyPairGenerator.getInstance("RSA");
-        keyGen.initialize(1024);
-        parellaKeys = keyGen.generateKeyPair();
-        xifrarRSA = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        
-        //System.out.println("PUBLIC KEY: " + getPublicServer());
-        
+
         taLog.setText(taLog.getText() + "Server started...\n");
     }
 
@@ -223,7 +176,7 @@ public class FXMLServerController implements Initializable {
         btnUsers.setDisable(true);
         btnStart.setDisable(false);
         tellEveryone("Server:is stopping and all users will be disconnected.\n:Chat");
-        System.out.println("Server Stop");
+        System.out.println("HOLA SEÑOR");
         try {
             Thread.sleep(2000);                 //5000 milliseconds is five second.
         } catch (InterruptedException ex) {
@@ -255,11 +208,5 @@ public class FXMLServerController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         btnStop.setDisable(true);
         btnUsers.setDisable(true);
-    }
-    
-    public String getPublicServer(){
-        String pubKeyToSend = Base64.getEncoder().encodeToString(parellaKeys.getPublic().getEncoded());
-        System.out.println("Clau pública del servidor: " + pubKeyToSend);
-        return pubKeyToSend;
     }
 }
