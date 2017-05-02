@@ -1,5 +1,11 @@
 package Client;
 
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,7 +25,7 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
+//import org.apache.commons.codec.binary.Base64;
 import static org.apache.commons.codec.binary.Hex.decodeHex;
 
 public class FXMLClientController implements Initializable {
@@ -118,7 +124,7 @@ public class FXMLClientController implements Initializable {
                         if(data[1].equals("has connected.")){
                             taLog.setText(taLog.getText() + data[0] + ": " + data[1] + "\n");
                         } else {
-                            String message = decryptData(String.valueOf(secretKey.getEncoded()), data[1]);
+                            String message = decryptData(secretKey, data[1]);
                         System.out.println(message);
                         taLog.setText(taLog.getText() + data[0] + ": " + String.valueOf(message) + "\n");
                         }
@@ -138,7 +144,18 @@ public class FXMLClientController implements Initializable {
                     if (data[2].equals(key)) {
                         
                         StringSecretKey = data[0];
-                        secretKey = loadKey(StringSecretKey);
+                        
+                        byte[] decodedKey = Base64.getDecoder().decode(StringSecretKey);
+                        secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+                        
+                        //secretKey = loadKey(StringSecretKey);
+                        //System.out.println("Secret key on client: " + secretKey + " string secretkey: " + StringSecretKey);
+                        
+                        // decode the base64 encoded string
+                        //byte[] decodedKey = Base64.decodeBase64(StringSecretKey);
+                        // rebuild key using SecretKeySpec
+                        /*SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");*/ 
+                        //System.out.println("Secret key on client: " + secretKey + " string secretkey: " + StringSecretKey);
                     }
                 }
             } catch (Exception ex) {
@@ -175,24 +192,29 @@ public class FXMLClientController implements Initializable {
     }
     */
     
-    public String encryptData(String sKey, String stringData) {
-       byte[] raw;
-            String encryptedString;
-            SecretKeySpec skeySpec;
-            byte[] encryptText = stringData.getBytes();
-            Cipher cipher;
-            try {
-                raw = Base64.decodeBase64(sKey);
-                skeySpec = new SecretKeySpec(raw, "AES");
-                cipher = Cipher.getInstance("AES");
-                cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
-                encryptedString = Base64.encodeBase64String(cipher.doFinal(encryptText));
-            } 
-            catch (Exception e) {
-                e.printStackTrace();
-                return "Error";
-            }
-            return encryptedString;
+    public String encryptData(SecretKey sKey, String stringData) {
+        byte[] raw;
+        System.out.println("String key: " + sKey + " String data: " + stringData);
+        String encryptedString;
+        byte[] encryptedData;
+        SecretKeySpec skeySpec;
+        byte[] encryptText = stringData.getBytes();
+        Cipher cipher;
+        try {
+            //raw = Base64.decodeBase64(sKey);
+            //skeySpec = new SecretKeySpec(raw, "AES");
+            cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.ENCRYPT_MODE, sKey);
+            //encryptedString = Base64.encodeBase64String(cipher.doFinal(encryptText));
+            encryptedData = cipher.doFinal(encryptText);
+            encryptedString = new String(encryptedData);
+        } 
+        catch (Exception e) {
+            e.printStackTrace();
+            return "Error" + e.getMessage();
+        }
+        
+        return encryptedString;
     }
     
     
@@ -210,24 +232,29 @@ public class FXMLClientController implements Initializable {
     return encryptedData;
     }*/
     
-    public String decryptData(String sKey, String stringData) {
+    public String decryptData(SecretKey sKey, String stringData) {
+        byte[] raw;
+        System.out.println("String key: " + sKey + " String data: " + stringData);
+        String decryptedString;
+        byte[] encryptedData;
+        SecretKeySpec skeySpec;
+        byte[] encryptText = stringData.getBytes();
         Cipher cipher;
-            String encryptedString;
-            byte[] encryptText = null;
-            byte[] raw;
-            SecretKeySpec skeySpec;
-            try {
-                raw = Base64.decodeBase64(sKey);
-                skeySpec = new SecretKeySpec(raw, "AES");
-                encryptText = Base64.decodeBase64(stringData);
-                cipher = Cipher.getInstance("AES");
-                cipher.init(Cipher.DECRYPT_MODE, skeySpec);
-                encryptedString = new String(cipher.doFinal(encryptText));
-            } catch (Exception e) {
-                e.printStackTrace();
-                return "Error";
-            }
-            return encryptedString;
+        try {
+            //raw = Base64.decodeBase64(sKey);
+            //skeySpec = new SecretKeySpec(raw, "AES");
+            cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.DECRYPT_MODE, sKey);
+            //encryptedString = Base64.encodeBase64String(cipher.doFinal(encryptText));
+            encryptedData = cipher.doFinal(encryptText);
+            decryptedString = new String(encryptedData);
+        } 
+        catch (Exception e) {
+            e.printStackTrace();
+            return "Error" + e.getMessage();
+        }
+        
+        return decryptedString;
     }
     
     public FXMLClientController() {
@@ -242,7 +269,7 @@ public class FXMLClientController implements Initializable {
         } else {
             try {
                 
-                String message = encryptData(String.valueOf(secretKey.getEncoded()), tfMsg.getText());
+                String message = encryptData(secretKey, tfMsg.getText());
                 //byte[] message = encryptData(secretKey, tfMsg.getText());
                 System.out.println(message);
                 writer.println(username + ":" + String.valueOf(message) + ":" + "Chat");

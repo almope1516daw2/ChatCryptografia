@@ -188,7 +188,7 @@ public class FXMLServerController implements Initializable {
     public static SecretKey generateKey() throws NoSuchAlgorithmException
     {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-        keyGenerator.init(256); // 128 default; 192 and 256 also possible
+        keyGenerator.init(128); // 128 default; 192 and 256 also possible
         return keyGenerator.generateKey();
     }
 
@@ -205,7 +205,7 @@ public class FXMLServerController implements Initializable {
         btnUsers.setDisable(true);
         btnStart.setDisable(false);
         tellEveryone("Server:is stopping and all users will be disconnected.\n:Chat");
-        System.out.println("HOLA SEÑOR");
+        System.out.println("Server Stopped");
         try {
             Thread.sleep(2000);                 //5000 milliseconds is five second.
         } catch (InterruptedException ex) {
