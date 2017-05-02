@@ -1,5 +1,6 @@
 package Client;
 
+import Server.FXMLServerController;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -49,6 +50,8 @@ public class FXMLClientController implements Initializable {
     int port;
     Boolean isConnected = false;
 
+    String serverPubKey;
+    
     Socket sock;
     BufferedReader reader;
     PrintWriter writer;
@@ -123,6 +126,8 @@ public class FXMLClientController implements Initializable {
                     } else if (data[2].equals(connect)) {
                         //taLog.removeAll();
                         userAdd(data[0]);
+                        serverPubKey = data[3];
+                        System.out.println("CLAU PUBLICA: " + serverPubKey);
                     } else if (data[2].equals(disconnect)) {
                         userRemove(data[0]);
 
@@ -203,7 +208,10 @@ public class FXMLClientController implements Initializable {
         pubKey = parellaClaus.getPublic();
         privKey = parellaClaus.getPrivate();
             
+        /*FXMLServerController servCont = new FXMLServerController();
         
+        serverPubKey = servCont.getPublicServer();
+        System.out.println("PUBLIC KEY SERVER" + serverPubKey);*/
         
         String pubKeyToSend = Base64.getEncoder().encodeToString(pubKey.getEncoded());
         System.out.println(pubKeyToSend);

@@ -73,7 +73,7 @@ public class FXMLServerController implements Initializable {
 
         @Override
         public void run() {
-            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat", publicKey = "Public";
+            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat", publicKey = "Public", servPubKey = getPublicServer();
             String[] data;
 
             try {
@@ -89,21 +89,21 @@ public class FXMLServerController implements Initializable {
                     }
 
                     if (data[2].equals(connect)) {
-                        tellEveryone((data[0] + ":" + data[1] + ":" + chat));
+                        tellEveryone((data[0] + ":" + data[1] + ":" + chat/* + ":" + servPubKey*/));
                         userAdd(data[0]);
                     } else if (data[2].equals(disconnect)) {
                         tellEveryone((data[0] + ":has disconnected." + ":" + chat));
                         userRemove(data[0]);
                     } else if (data[2].equals(chat)) {
-                         xifrarRSA.init(Cipher.DECRYPT_MODE, parellaKeys.getPrivate());
+                        /*xifrarRSA.init(Cipher.DECRYPT_MODE, parellaKeys.getPrivate());
                          
-            byte[] missatgeDes= xifrarRSA.doFinal(decoded);
-            System.out.println(new String(missatgeDes));
-                        //tellEveryone(message);
+                        byte[] missatgeDes= xifrarRSA.doFinal(decoded);
+                        System.out.println(new String(missatgeDes));
+                        //tellEveryone(message);*/
                     } else if (data[2].equals(publicKey)) {
-                         System.out.println("PUBLIC RECIEVED: ");
-                         //System.out.println(data[0]);
-                        decoded = Base64.getDecoder().decode(data[0]);
+                        /*System.out.println("PUBLIC RECIEVED: ");
+                        //System.out.println(data[0]);
+                        decoded = Base64.getDecoder().decode(data[0]);*/
                         
                        
             
@@ -207,11 +207,13 @@ public class FXMLServerController implements Initializable {
         starter.start();
         
         
-         keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(1024);
-             parellaKeys = keyGen.generateKeyPair();
-             xifrarRSA = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-
+        keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(1024);
+        parellaKeys = keyGen.generateKeyPair();
+        xifrarRSA = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        
+        //System.out.println("PUBLIC KEY: " + getPublicServer());
+        
         taLog.setText(taLog.getText() + "Server started...\n");
     }
 
@@ -221,7 +223,7 @@ public class FXMLServerController implements Initializable {
         btnUsers.setDisable(true);
         btnStart.setDisable(false);
         tellEveryone("Server:is stopping and all users will be disconnected.\n:Chat");
-        System.out.println("HOLA SEÑOR");
+        System.out.println("Server Stop");
         try {
             Thread.sleep(2000);                 //5000 milliseconds is five second.
         } catch (InterruptedException ex) {
@@ -253,5 +255,11 @@ public class FXMLServerController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         btnStop.setDisable(true);
         btnUsers.setDisable(true);
+    }
+    
+    public String getPublicServer(){
+        String pubKeyToSend = Base64.getEncoder().encodeToString(parellaKeys.getPublic().getEncoded());
+        System.out.println("Clau pública del servidor: " + pubKeyToSend);
+        return pubKeyToSend;
     }
 }
