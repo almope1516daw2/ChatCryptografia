@@ -1,5 +1,8 @@
 package Client;
 
+import static Client.FXMLClientController.currUsr;
+import static Server.FXMLServerController.generateKeyPair;
+import static Server.FXMLServerController.saveKeys;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
@@ -28,6 +31,7 @@ import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -58,17 +62,21 @@ public class FXMLClientController implements Initializable {
     @FXML
     private Button btnSend;
     
+    public static String currUsr;
     public static final String nl = System.getProperty("file.separator");
-    public static final String PUBLIC_KEY_FILE = System.getProperty("user.dir") + nl + "pub.key";
-    public static final String PRIVATE_KEY_FILE = System.getProperty("user.dir") + nl + "priv.key";
+    public static final String PUBLIC_KEY_FILE = System.getProperty("user.dir") + nl + "pub";
+    public static final String PRIVATE_KEY_FILE = System.getProperty("user.dir") + nl + "priv";
+    public static final String DOT_KEY = ".key";
     public PublicKey pubk;
     public PrivateKey privk;
+    public Dictionary keyUsr;
     
     String username, address,psw;
     ArrayList<String> users = new ArrayList();
     int port;
     Boolean isConnected = false;
 
+    KeyPair keys;
     Socket sock;
     BufferedReader reader;
     PrintWriter writer;
@@ -84,6 +92,9 @@ public class FXMLClientController implements Initializable {
     //--------------------------//
     public void userAdd(String data) {
         users.add(data);
+        /*for(int i = 0; i<users.size(); i++){
+            System.out.println("USER: " + users.get(i));
+        }*/
     }
 
     public void userRemove(String data) {
@@ -141,10 +152,15 @@ public class FXMLClientController implements Initializable {
                     if (data[2].equals(chat)) {
                         if(data[1].equals("has connected.")){
                             taLog.setText(taLog.getText() + data[0] + ": " + data[1] + "\n");
+                            String usr = data[0];
+                            String pubKeyFile = PUBLIC_KEY_FILE + usr + DOT_KEY;
+                            pubk = getPublicKeyFromFile(pubKeyFile,usr);
+                            keyUsr.put(usr, pubk);
+                            //System.out.println("PUBLIC KEY DE " + usr + ": " + pubk);
                         } else {
                             String message = decryptData(secretKey, data[1]);
-                        System.out.println(message);
-                        taLog.setText(taLog.getText() + data[0] + ": " + String.valueOf(message) + "\n");
+                            System.out.println(message);
+                            taLog.setText(taLog.getText() + data[0] + ": " + String.valueOf(message) + "\n");
                         }
                         
 
@@ -233,7 +249,7 @@ public class FXMLClientController implements Initializable {
         return decryptedString;
     }
     
-    public static PublicKey getPublicKeyFromFile(String fileName) throws Exception{
+    public static PublicKey getPublicKeyFromFile(String fileName, String usr) throws Exception{
         PublicKey pk = null;
         File f = new File(fileName);
         FileInputStream fis = new FileInputStream(f);
@@ -249,7 +265,7 @@ public class FXMLClientController implements Initializable {
         return pk;
     }
     
-    public static PrivateKey getPrivateKeyFromFile(String fileName) throws Exception{
+    public static PrivateKey getPrivateKeyFromFile(String fileName, String usr) throws Exception{
         PrivateKey pk = null;
         File f = new File(fileName);
         FileInputStream fis = new FileInputStream(f);
@@ -282,7 +298,7 @@ public class FXMLClientController implements Initializable {
     public static void saveKeys(KeyPair keys) throws FileNotFoundException, IOException{
         byte[] pub = keys.getPublic().getEncoded();
         byte[] pri = keys.getPrivate().getEncoded();
-        FileOutputStream fos = new FileOutputStream(new File("pub.key"));
+        FileOutputStream fos = new FileOutputStream(new File("pub" + currUsr + ".key"));
         FileOutputStream fos1 = new FileOutputStream(new File("priv.key"));
         //BufferedOutputStream bos = new BufferedOutputStream(fos);
         //BufferedOutputStream bos1 = new BufferedOutputStream(fos1);
@@ -333,13 +349,15 @@ public class FXMLClientController implements Initializable {
         System.out.println(address);
         System.out.println(port);
         if (isConnected == false) {
-
-            PublicKey pk = getPublicKeyFromFile(PUBLIC_KEY_FILE);
+            
+            keys = generateKeyPair(512);
+            saveKeys(keys);
+            /*PublicKey pk = getPublicKeyFromFile(PUBLIC_KEY_FILE);
             pubk = pk;
             System.out.println("KEY: " + pubk);
             
             privk = getPrivateKeyFromFile(PRIVATE_KEY_FILE);
-            System.out.println("PRIV: " + privk);
+            System.out.println("PRIV: " + privk);*/
             
             try {
                 sock = new Socket(address, port);
@@ -347,6 +365,7 @@ public class FXMLClientController implements Initializable {
                 reader = new BufferedReader(streamreader);
                 writer = new PrintWriter(sock.getOutputStream());
                 writer.println(username + ":has connected.:Connect");
+                //currUsr = username;
                 writer.flush();
                 isConnected = true;
             } catch (Exception ex) {
@@ -373,6 +392,7 @@ public class FXMLClientController implements Initializable {
 
     public void setUser(String user) {
         username = user;
+        currUsr = username;
         System.out.println("HELLO " + username);
     }
     
