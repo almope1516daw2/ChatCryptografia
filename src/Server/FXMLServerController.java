@@ -1,14 +1,19 @@
 package Server;
+import java.io.BufferedOutputStream;
 import static org.apache.commons.codec.binary.Hex.*;
 import static org.apache.commons.io.FileUtils.*;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,9 +40,12 @@ public class FXMLServerController implements Initializable {
     @FXML
     public Button btnClear;
 
+    KeyPair keys;
     ArrayList clientOutputStreams;
     ArrayList<String> users;
-    public  String StringSecretKey;
+    public String StringSecretKey;
+    
+    
     public class ClientHandler implements Runnable {
 
         BufferedReader reader;
@@ -182,7 +190,35 @@ public class FXMLServerController implements Initializable {
         SecretKey secretKey = generateKey();
         StringSecretKey = saveKey(secretKey);
         
+        keys = generateKeyPair(512);
+        saveKeys(keys);
+        
         taLog.setText(taLog.getText() + "Server started...\n");
+    }
+    
+    public static KeyPair generateKeyPair(int len){
+        KeyPair keys = null;
+        try{
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(len);
+            keys = keyGen.genKeyPair();
+        }catch(Exception e){
+            System.out.println("Error al generar el parell de claus: " + e.getMessage());
+        }
+        return keys;
+    }
+    
+    public static void saveKeys(KeyPair keys) throws FileNotFoundException, IOException{
+        byte[] pub = keys.getPublic().getEncoded();
+        byte[] pri = keys.getPrivate().getEncoded();
+        FileOutputStream fos = new FileOutputStream(new File("pub.key"));
+        FileOutputStream fos1 = new FileOutputStream(new File("priv.key"));
+        //BufferedOutputStream bos = new BufferedOutputStream(fos);
+        //BufferedOutputStream bos1 = new BufferedOutputStream(fos1);
+        fos.write(pub);
+        fos1.write(pri);
+        fos.close();
+        fos1.close();
     }
 
     public static SecretKey generateKey() throws NoSuchAlgorithmException

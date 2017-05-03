@@ -7,12 +7,22 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URL;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
@@ -25,7 +35,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.DecoderException;
-//import org.apache.commons.codec.binary.Base64;
 import static org.apache.commons.codec.binary.Hex.decodeHex;
 
 public class FXMLClientController implements Initializable {
@@ -44,7 +53,12 @@ public class FXMLClientController implements Initializable {
     private Button btnDisconnect;
     @FXML
     private Button btnSend;
-
+    
+    public static final String nl = System.getProperty("file.separator");
+    public static final String PUBLIC_KEY_FILE = System.getProperty("user.dir") + nl + "pub.key";
+    public static final String PRIVATE_KEY_FILE = System.getProperty("user.dir") + nl + "priv.key";
+    public PublicKey pubk;
+    public PrivateKey privk;
     
     String username, address,psw;
     ArrayList<String> users = new ArrayList();
@@ -148,14 +162,6 @@ public class FXMLClientController implements Initializable {
                         byte[] decodedKey = Base64.getDecoder().decode(StringSecretKey);
                         secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
                         
-                        //secretKey = loadKey(StringSecretKey);
-                        //System.out.println("Secret key on client: " + secretKey + " string secretkey: " + StringSecretKey);
-                        
-                        // decode the base64 encoded string
-                        //byte[] decodedKey = Base64.decodeBase64(StringSecretKey);
-                        // rebuild key using SecretKeySpec
-                        /*SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");*/ 
-                        //System.out.println("Secret key on client: " + secretKey + " string secretkey: " + StringSecretKey);
                     }
                 }
             } catch (Exception ex) {
@@ -176,21 +182,6 @@ public class FXMLClientController implements Initializable {
         }
         return new SecretKeySpec(encoded, "AES");
     }
-    /*
-    public byte[] encryptData(SecretKey sKey, String stringData) {
-        byte[] data = stringData.getBytes();
-        byte[] encryptedData = null;
-        try {
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, sKey);
-            
-            encryptedData = cipher.doFinal(data);
-        } catch (Exception ex) {
-            System.err.println("Error xifrant les dades: " + ex.getMessage());
-        }
-    return encryptedData;
-    }
-    */
     
     public String encryptData(SecretKey sKey, String stringData) {
         byte[] raw;
@@ -201,8 +192,6 @@ public class FXMLClientController implements Initializable {
         byte[] encryptText = stringData.getBytes();
         Cipher cipher;
         try {
-            //raw = Base64.decodeBase64(sKey);
-            //skeySpec = new SecretKeySpec(raw, "AES");
             cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.ENCRYPT_MODE, sKey);
             //encryptedString = Base64.encodeBase64String(cipher.doFinal(encryptText));
@@ -217,21 +206,6 @@ public class FXMLClientController implements Initializable {
         return encryptedString;
     }
     
-    
-    /*public byte[] decryptData(SecretKey sKey, String stringData) {
-        byte[] data = stringData.getBytes();
-        byte[] encryptedData = null;
-        try {
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, sKey);
-            
-            encryptedData = cipher.doFinal(data);
-        } catch (Exception ex) {
-            System.err.println("Error xifrant les dades: " + ex);
-        }
-    return encryptedData;
-    }*/
-    
     public String decryptData(SecretKey sKey, String stringData) {
         byte[] raw;
         System.out.println("String key: " + sKey + " String data: " + stringData);
@@ -241,8 +215,6 @@ public class FXMLClientController implements Initializable {
         byte[] encryptText = stringData.getBytes();
         Cipher cipher;
         try {
-            //raw = Base64.decodeBase64(sKey);
-            //skeySpec = new SecretKeySpec(raw, "AES");
             cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, sKey);
             //encryptedString = Base64.encodeBase64String(cipher.doFinal(encryptText));
@@ -256,6 +228,39 @@ public class FXMLClientController implements Initializable {
         
         return decryptedString;
     }
+    
+    public static PublicKey getPublicKeyFromFile(String fileName) throws Exception{
+        PublicKey pk = null;
+        File f = new File(fileName);
+        FileInputStream fis = new FileInputStream(f);
+        DataInputStream dis = new DataInputStream(fis);
+        byte[] keyBytes = new byte[(int)f.length()];
+        dis.readFully(keyBytes);
+        dis.close();
+
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        pk = kf.generatePublic(spec);
+        
+        return pk;
+    }
+    
+    public static PrivateKey getPrivateKeyFromFile(String fileName) throws Exception{
+        PrivateKey pk = null;
+        File f = new File(fileName);
+        FileInputStream fis = new FileInputStream(f);
+        DataInputStream dis = new DataInputStream(fis);
+        byte[] keyBytes = new byte[(int)f.length()];
+        dis.readFully(keyBytes);
+        dis.close();
+
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        pk = kf.generatePrivate(spec);
+        
+        return pk;
+    }
+    
     
     public FXMLClientController() {
     }
@@ -286,7 +291,7 @@ public class FXMLClientController implements Initializable {
     }
 
     @FXML
-    private void Connect(ActionEvent event) {
+    private void Connect(ActionEvent event) throws IOException, ClassNotFoundException, Exception {
         btnDisconnect.setDisable(false);
         btnSend.setDisable(false);
         btnConnect.setDisable(true);
@@ -297,6 +302,13 @@ public class FXMLClientController implements Initializable {
         System.out.println(port);
         if (isConnected == false) {
 
+            PublicKey pk = getPublicKeyFromFile(PUBLIC_KEY_FILE);
+            pubk = pk;
+            System.out.println("KEY: " + pubk);
+            
+            privk = getPrivateKeyFromFile(PRIVATE_KEY_FILE);
+            System.out.println("PRIV: " + privk);
+            
             try {
                 sock = new Socket(address, port);
                 InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
