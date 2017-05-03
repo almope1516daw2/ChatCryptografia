@@ -10,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -19,6 +21,8 @@ import java.net.Socket;
 import java.net.URL;
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -261,6 +265,34 @@ public class FXMLClientController implements Initializable {
         return pk;
     }
     
+    //-------------------------------------------------------------------------------------------
+    
+    public static KeyPair generateKeyPair(int len){
+        KeyPair keys = null;
+        try{
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(len);
+            keys = keyGen.genKeyPair();
+        }catch(Exception e){
+            System.out.println("Error al generar el parell de claus: " + e.getMessage());
+        }
+        return keys;
+    }
+    
+    public static void saveKeys(KeyPair keys) throws FileNotFoundException, IOException{
+        byte[] pub = keys.getPublic().getEncoded();
+        byte[] pri = keys.getPrivate().getEncoded();
+        FileOutputStream fos = new FileOutputStream(new File("pub.key"));
+        FileOutputStream fos1 = new FileOutputStream(new File("priv.key"));
+        //BufferedOutputStream bos = new BufferedOutputStream(fos);
+        //BufferedOutputStream bos1 = new BufferedOutputStream(fos1);
+        fos.write(pub);
+        fos1.write(pri);
+        fos.close();
+        fos1.close();
+    }
+    
+    //-------------------------------------------------------------------------------------------
     
     public FXMLClientController() {
     }
